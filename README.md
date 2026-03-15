@@ -9,7 +9,7 @@
 
 ![Home Page View](homePage.png)
 
-[Live Demo](https://sid2169.github.io/sketch/) • [Report Bug](https://github.com/Sid2169/sketch/issues) • [Request Feature](https://github.com/Sid2169/sketch/issues)
+[Live Demo](https://trade-analyze-o4xb.vercel.app/) • [Report Bug](https://github.com/Sid2169/trade-analyze/issues) • [Request Feature](https://github.com/Sid2169/trade-analyze/issues)
 
 
 ---
