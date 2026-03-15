@@ -478,7 +478,673 @@ body {
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
   .app {
+    padding: 0 16px;@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #080c10;
+  --bg-2: #0d1117;
+  --bg-3: #111820;
+  --bg-panel: #0e1520;
+  --border: #1a2535;
+  --border-bright: #243045;
+  --text: #8ba0b8;
+  --text-dim: #445566;
+  --text-bright: #c8d8e8;
+  --profit: #00e676;
+  --profit-dim: rgba(0, 230, 118, 0.08);
+  --profit-mid: rgba(0, 230, 118, 0.15);
+  --loss: #ff3d3d;
+  --loss-dim: rgba(255, 61, 61, 0.07);
+  --loss-mid: rgba(255, 61, 61, 0.15);
+  --accent: #00b4d8;
+  --accent-dim: rgba(0, 180, 216, 0.1);
+  --mono: 'Share Tech Mono', monospace;
+  --display: 'Rajdhani', sans-serif;
+  --glow-profit: 0 0 12px rgba(0, 230, 118, 0.3);
+  --glow-loss: 0 0 12px rgba(255, 61, 61, 0.3);
+  --glow-accent: 0 0 16px rgba(0, 180, 216, 0.25);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  border: none;
+}
+
+/* ── SCANLINE EFFECT ── */
+.scanline {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 100;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.04) 2px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
+}
+
+/* ── LAYOUT ── */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── HEADER ── */
+.header {
+  padding: 48px 0 32px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.header-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
+.header-title {
+  font-family: var(--display);
+  font-size: clamp(36px, 6vw, 64px);
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: 0.12em;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.title-bracket {
+  color: var(--accent);
+  opacity: 0.6;
+}
+
+.header-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  color: var(--text-dim);
+}
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  padding: 40px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* ── PANEL LABEL ── */
+.panel-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  margin-bottom: 20px;
+  opacity: 0.7;
+}
+
+/* ── CONFIG PANEL ── */
+.config-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  padding: 32px;
+  position: relative;
+}
+
+.config-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--accent);
+  opacity: 0.5;
+}
+
+.inputs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-field {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-bright);
+  font-family: var(--mono);
+  font-size: 16px;
+  padding: 10px 36px 10px 12px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -moz-appearance: textfield;
+}
+
+.input-field::-webkit-outer-spin-button,
+.input-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), var(--glow-accent);
+}
+
+.input-suffix {
+  position: absolute;
+  right: 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+/* ── RUN BUTTON ── */
+.run-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  padding: 14px 32px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.run-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.run-btn:hover {
+  box-shadow: var(--glow-accent);
+  color: #fff;
+  background: rgba(0, 180, 216, 0.2);
+}
+
+.run-icon {
+  font-size: 13px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── SUMMARY ── */
+.summary-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  padding: 32px;
+  position: relative;
+  animation: fadeUp 0.4s ease both;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1px;
+  background: var(--border);
+}
+
+.summary-card {
+  background: var(--bg-2);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  color: var(--text-dim);
+}
+
+.card-value {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.card-value.neutral {
+  color: var(--text-bright);
+}
+
+.card-pct {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.separator {
+  color: var(--text-dim);
+}
+
+/* ── PROFIT / LOSS COLORS ── */
+.profit {
+  color: var(--profit);
+}
+.loss {
+  color: var(--loss);
+}
+
+/* ── TABLE ── */
+.table-section {
+  animation: fadeUp 0.5s ease both;
+  animation-delay: 0.1s;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+}
+
+.trade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.trade-table thead tr {
+  background: var(--bg-3);
+  border-bottom: 2px solid var(--border-bright);
+}
+
+.trade-table th {
+  padding: 14px 20px;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  color: var(--text-dim);
+  font-weight: normal;
+}
+
+.trade-table th:first-child {
+  width: 60px;
+  text-align: center;
+}
+
+.trade-table th:last-child {
+  width: 110px;
+  text-align: center;
+}
+
+/* Row styling */
+.row-profit {
+  background: var(--profit-dim);
+  border-bottom: 1px solid rgba(0, 230, 118, 0.06);
+  transition: background 0.15s;
+}
+
+.row-profit:hover {
+  background: var(--profit-mid);
+}
+
+.row-loss {
+  background: var(--loss-dim);
+  border-bottom: 1px solid rgba(255, 61, 61, 0.06);
+  transition: background 0.15s;
+}
+
+.row-loss:hover {
+  background: var(--loss-mid);
+}
+
+/* Cells */
+.trade-table td {
+  padding: 12px 20px;
+  vertical-align: middle;
+}
+
+.td-serial {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  border-right: 1px solid var(--border);
+}
+
+.td-capital {
+  color: var(--text-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.td-pnl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: bold;
+}
+
+.td-pnl.profit {
+  text-shadow: var(--glow-profit);
+}
+
+.td-pnl.loss {
+  text-shadow: var(--glow-loss);
+}
+
+.pct-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+}
+
+.td-outcome {
+  text-align: center;
+}
+
+.badge {
+  display: inline-block;
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  padding: 4px 10px;
+  border-radius: 2px;
+}
+
+.badge-profit {
+  color: var(--profit);
+  background: rgba(0, 230, 118, 0.1);
+  border: 1px solid rgba(0, 230, 118, 0.25);
+}
+
+.badge-loss {
+  color: var(--loss);
+  background: rgba(255, 61, 61, 0.1);
+  border: 1px solid rgba(255, 61, 61, 0.25);
+}
+
+/* ── FOOTER ── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 20px 0;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .app {
     padding: 0 16px;
+  }
+
+  .config-panel,
+  .summary-panel {
+    padding: 24px 20px;
+  }
+
+  .inputs-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .trade-table th:nth-child(2),
+  .trade-table td:nth-child(2) {
+    display: none;
+  }
+}
+
+/* ── MONTE CARLO PANEL ── */
+.mc-panel {
+  border-left-color: #7c3aed;
+}
+
+.mc-panel::before {
+  background: #7c3aed;
+}
+
+.mc-description {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.7;
+  letter-spacing: 0.04em;
+  margin-bottom: 24px;
+  max-width: 640px;
+}
+
+.mc-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.mc-input-row .input-group {
+  width: 220px;
+}
+
+.mc-run-btn {
+  border-color: #7c3aed;
+  color: #a78bfa;
+  background: rgba(124, 58, 237, 0.08);
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.mc-run-btn:hover {
+  box-shadow: 0 0 16px rgba(124, 58, 237, 0.3);
+  color: #c4b5fd;
+  background: rgba(124, 58, 237, 0.18);
+}
+
+/* ── MONTE CARLO RESULTS ── */
+.mc-results-panel {
+  background: var(--bg-panel);
+  border: 1px solid #1e1535;
+  padding: 32px;
+  position: relative;
+  animation: fadeUp 0.4s ease both;
+}
+
+.mc-results-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: #7c3aed;
+  opacity: 0.6;
+}
+
+.mc-n-label {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  font-family: var(--mono);
+}
+
+.mc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 1px;
+  background: #1e1535;
+}
+
+.mc-card {
+  background: var(--bg-2);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mc-card-primary {
+  background: #0c0d18;
+}
+
+.mc-card-wide {
+  grid-column: span 4;
+  background: #0c0d18;
+}
+
+.mc-card-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  color: #6b5b8a;
+}
+
+.mc-card-value {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.mc-profitable-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.mc-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mc-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.bar-profit {
+  background: linear-gradient(90deg, rgba(0,230,118,0.4), var(--profit));
+  box-shadow: 0 0 8px rgba(0, 230, 118, 0.4);
+}
+
+.bar-loss {
+  background: linear-gradient(90deg, rgba(255,61,61,0.4), var(--loss));
+  box-shadow: 0 0 8px rgba(255, 61, 61, 0.4);
+}
+
+@media (max-width: 768px) {
+  .mc-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .mc-card-wide {
+    grid-column: span 2;
+  }
+  .mc-profitable-bar-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .mc-bar-track {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .mc-grid {
+    grid-template-columns: 1fr;
+  }
+  .mc-card-wide {
+    grid-column: span 1;
+  }
+  .mc-input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .mc-input-row .input-group {
+    width: 100%;
+  }
+}
   }
 
   .config-panel,

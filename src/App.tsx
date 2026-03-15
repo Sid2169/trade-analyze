@@ -9,6 +9,16 @@ interface TradeRow {
   isProfit: boolean
 }
 
+interface MonteCarloResult {
+  avgFinalCapital: number
+  avgPnL: number
+  avgPnLPct: number
+  bestFinalCapital: number
+  worstFinalCapital: number
+  pctProfitable: number
+  numSimulations: number
+}
+
 function simulateTrades(
   initialCapital: number,
   numTrades: number,
@@ -20,12 +30,8 @@ function simulateTrades(
   let capital = initialCapital
   const successRate = successPct / 100
 
-  // Use a seeded-like deterministic distribution based on success %
-  // Spread wins/losses evenly using round-robin based on probability
   for (let i = 0; i < numTrades; i++) {
     const capitalBefore = capital
-    // Deterministic win/loss based on position in sequence
-    // Every 1/successRate trades, we get successRate wins
     const threshold = (i * successRate) % 1
     const nextThreshold = ((i + 1) * successRate) % 1
     const isProfit = nextThreshold < threshold || nextThreshold === 0
@@ -50,8 +56,53 @@ function simulateTrades(
   return rows
 }
 
+function runMonteCarlo(
+  initialCapital: number,
+  numTrades: number,
+  successPct: number,
+  profitPct: number,
+  stopLossPct: number,
+  numSimulations: number
+): MonteCarloResult {
+  const successRate = successPct / 100
+  const finalCapitals: number[] = []
+
+  for (let s = 0; s < numSimulations; s++) {
+    let capital = initialCapital
+    for (let t = 0; t < numTrades; t++) {
+      const isProfit = Math.random() < successRate
+      const pnl = isProfit
+        ? capital * (profitPct / 100)
+        : -capital * (stopLossPct / 100)
+      capital += pnl
+    }
+    finalCapitals.push(capital)
+  }
+
+  const avgFinalCapital = finalCapitals.reduce((a, b) => a + b, 0) / numSimulations
+  const avgPnL = avgFinalCapital - initialCapital
+  const avgPnLPct = (avgPnL / initialCapital) * 100
+  const bestFinalCapital = Math.max(...finalCapitals)
+  const worstFinalCapital = Math.min(...finalCapitals)
+  const pctProfitable =
+    (finalCapitals.filter((c) => c > initialCapital).length / numSimulations) * 100
+
+  return {
+    avgFinalCapital,
+    avgPnL,
+    avgPnLPct,
+    bestFinalCapital,
+    worstFinalCapital,
+    pctProfitable,
+    numSimulations,
+  }
+}
+
 function fmt(n: number): string {
-  return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return n.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
 }
 
 function InputField({
@@ -100,6 +151,11 @@ export default function App() {
   const [hasRun, setHasRun] = useState(false)
   const tableRef = useRef<HTMLDivElement>(null)
 
+  const [numSimulations, setNumSimulations] = useState('1000')
+  const [mcResult, setMcResult] = useState<MonteCarloResult | null>(null)
+  const [hasMcRun, setHasMcRun] = useState(false)
+  const mcRef = useRef<HTMLDivElement>(null)
+
   const handleRun = () => {
     const ic = parseFloat(initialCapital)
     const nt = parseInt(numTrades)
@@ -112,13 +168,36 @@ export default function App() {
     const result = simulateTrades(ic, nt, sp, pp, sl)
     setTrades(result)
     setHasRun(true)
-    setTimeout(() => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
+    setTimeout(
+      () => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      100
+    )
+  }
+
+  const handleMonteCarlo = () => {
+    const ic = parseFloat(initialCapital)
+    const nt = parseInt(numTrades)
+    const sp = parseFloat(successPct)
+    const pp = parseFloat(profitPct)
+    const sl = parseFloat(stopLossPct)
+    const ns = parseInt(numSimulations)
+
+    if (!ic || !nt || !sp || !pp || !sl || !ns) return
+
+    const result = runMonteCarlo(ic, nt, sp, pp, sl, ns)
+    setMcResult(result)
+    setHasMcRun(true)
+    setTimeout(
+      () => mcRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      100
+    )
   }
 
   const finalCapital = trades.length > 0 ? trades[trades.length - 1].capitalAfter : 0
   const totalPnL = finalCapital - parseFloat(initialCapital || '0')
-  const totalPnLPct = parseFloat(initialCapital) > 0 ? (totalPnL / parseFloat(initialCapital)) * 100 : 0
-  const winCount = trades.filter(t => t.isProfit).length
+  const totalPnLPct =
+    parseFloat(initialCapital) > 0 ? (totalPnL / parseFloat(initialCapital)) * 100 : 0
+  const winCount = trades.filter((t) => t.isProfit).length
   const lossCount = trades.length - winCount
 
   return (
@@ -136,6 +215,7 @@ export default function App() {
       </header>
 
       <main className="main">
+        {/* ── PARAMETERS ── */}
         <section className="config-panel">
           <div className="panel-label">▸ PARAMETERS</div>
           <div className="inputs-grid">
@@ -186,6 +266,7 @@ export default function App() {
           </button>
         </section>
 
+        {/* ── DETERMINISTIC SUMMARY + TABLE ── */}
         {hasRun && trades.length > 0 && (
           <>
             <section className="summary-panel" ref={tableRef}>
@@ -193,7 +274,11 @@ export default function App() {
               <div className="summary-grid">
                 <div className="summary-card">
                   <div className="card-label">FINAL CAPITAL</div>
-                  <div className={`card-value ${finalCapital >= parseFloat(initialCapital) ? 'profit' : 'loss'}`}>
+                  <div
+                    className={`card-value ${
+                      finalCapital >= parseFloat(initialCapital) ? 'profit' : 'loss'
+                    }`}
+                  >
                     ₹{fmt(finalCapital)}
                   </div>
                 </div>
@@ -201,7 +286,11 @@ export default function App() {
                   <div className="card-label">NET P&L</div>
                   <div className={`card-value ${totalPnL >= 0 ? 'profit' : 'loss'}`}>
                     {totalPnL >= 0 ? '+' : ''}₹{fmt(totalPnL)}
-                    <span className="card-pct"> ({totalPnLPct >= 0 ? '+' : ''}{totalPnLPct.toFixed(2)}%)</span>
+                    <span className="card-pct">
+                      {' '}
+                      ({totalPnLPct >= 0 ? '+' : ''}
+                      {totalPnLPct.toFixed(2)}%)
+                    </span>
                   </div>
                 </div>
                 <div className="summary-card">
@@ -240,17 +329,24 @@ export default function App() {
                         key={row.serial}
                         className={row.isProfit ? 'row-profit' : 'row-loss'}
                       >
-                        <td className="td-serial">{row.serial.toString().padStart(2, '0')}</td>
+                        <td className="td-serial">
+                          {row.serial.toString().padStart(2, '0')}
+                        </td>
                         <td className="td-capital">₹{fmt(row.capitalBefore)}</td>
                         <td className={`td-pnl ${row.isProfit ? 'profit' : 'loss'}`}>
                           {row.isProfit ? '+' : ''}₹{fmt(row.profitOrLoss)}
                           <span className="pct-badge">
-                            {row.isProfit ? '+' : ''}{((row.profitOrLoss / row.capitalBefore) * 100).toFixed(2)}%
+                            {row.isProfit ? '+' : ''}
+                            {((row.profitOrLoss / row.capitalBefore) * 100).toFixed(2)}%
                           </span>
                         </td>
                         <td className="td-capital">₹{fmt(row.capitalAfter)}</td>
                         <td className="td-outcome">
-                          <span className={`badge ${row.isProfit ? 'badge-profit' : 'badge-loss'}`}>
+                          <span
+                            className={`badge ${
+                              row.isProfit ? 'badge-profit' : 'badge-loss'
+                            }`}
+                          >
                             {row.isProfit ? '▲ WIN' : '▼ LOSS'}
                           </span>
                         </td>
@@ -261,6 +357,105 @@ export default function App() {
               </div>
             </section>
           </>
+        )}
+
+        {/* ── MONTE CARLO SECTION ── */}
+        <section className="config-panel mc-panel">
+          <div className="panel-label">▸ MONTE CARLO ANALYSIS</div>
+          <p className="mc-description">
+            Runs multiple simulations with randomised win/loss order to estimate the
+            probable range of outcomes for your strategy. Uses the same parameters set above.
+          </p>
+          <div className="mc-input-row">
+            <InputField
+              label="NO. OF SIMULATIONS"
+              value={numSimulations}
+              onChange={setNumSimulations}
+              min={1}
+              max={100000}
+              step={100}
+            />
+            <button className="run-btn mc-run-btn" onClick={handleMonteCarlo}>
+              <span className="run-icon">⟳</span>
+              RUN MONTE CARLO
+            </button>
+          </div>
+        </section>
+
+        {hasMcRun && mcResult && (
+          <section className="mc-results-panel" ref={mcRef}>
+            <div className="panel-label">
+              ▸ MONTE CARLO RESULTS &nbsp;
+              <span className="mc-n-label">
+                n = {mcResult.numSimulations.toLocaleString()} simulations ·{' '}
+                {parseInt(numTrades)} trades each
+              </span>
+            </div>
+
+            <div className="mc-grid">
+              <div className="mc-card mc-card-primary">
+                <div className="mc-card-label">AVG. FINAL CAPITAL</div>
+                <div
+                  className={`mc-card-value ${
+                    mcResult.avgFinalCapital >= parseFloat(initialCapital)
+                      ? 'profit'
+                      : 'loss'
+                  }`}
+                >
+                  ₹{fmt(mcResult.avgFinalCapital)}
+                </div>
+              </div>
+
+              <div className="mc-card mc-card-primary">
+                <div className="mc-card-label">AVG. NET P&L</div>
+                <div
+                  className={`mc-card-value ${mcResult.avgPnL >= 0 ? 'profit' : 'loss'}`}
+                >
+                  {mcResult.avgPnL >= 0 ? '+' : ''}₹{fmt(mcResult.avgPnL)}
+                  <span className="card-pct">
+                    {' '}
+                    ({mcResult.avgPnLPct >= 0 ? '+' : ''}
+                    {mcResult.avgPnLPct.toFixed(2)}%)
+                  </span>
+                </div>
+              </div>
+
+              <div className="mc-card">
+                <div className="mc-card-label">BEST OUTCOME</div>
+                <div className="mc-card-value profit">
+                  ₹{fmt(mcResult.bestFinalCapital)}
+                </div>
+              </div>
+
+              <div className="mc-card">
+                <div className="mc-card-label">WORST OUTCOME</div>
+                <div className="mc-card-value loss">
+                  ₹{fmt(mcResult.worstFinalCapital)}
+                </div>
+              </div>
+
+              <div className="mc-card mc-card-wide">
+                <div className="mc-card-label">% PROFITABLE SIMULATIONS</div>
+                <div className="mc-profitable-bar-wrap">
+                  <div
+                    className={`mc-card-value ${
+                      mcResult.pctProfitable >= 50 ? 'profit' : 'loss'
+                    }`}
+                  >
+                    {mcResult.pctProfitable.toFixed(1)}%
+                  </div>
+                  <div className="mc-bar-track">
+                    <div
+                      className={`mc-bar-fill ${
+                        mcResult.pctProfitable >= 50 ? 'bar-profit' : 'bar-loss'
+                      }`}
+                      style={{ width: `${mcResult.pctProfitable}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
         )}
       </main>
 
